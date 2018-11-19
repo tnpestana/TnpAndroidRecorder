@@ -26,10 +26,11 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button btnPlay, btnRec, btnStop;
+    private Button btnPlay, btnRec;
     private MediaRecorder audioRecorder;
     private File outputFile;
     private Chronometer timer;
+    private boolean isRecording = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,9 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnRec = (Button) findViewById(R.id.btnRec);
         btnPlay = (Button) findViewById(R.id.btnPlay);
-        btnStop = (Button) findViewById(R.id.btnStop);
         btnPlay.setEnabled(false);
-        btnStop.setEnabled(false);
 
         timer = (Chronometer) findViewById(R.id.textView);
 
@@ -53,14 +52,10 @@ public class MainActivity extends AppCompatActivity {
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                requestAudioPermissions();
-            }
-        });
-
-        btnStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                stopRecording();
+                if(!isRecording)
+                    requestAudioPermissions();
+                else
+                    stopRecording();
             }
         });
 
@@ -95,9 +90,7 @@ public class MainActivity extends AppCompatActivity {
             // handle
         }
 
-        btnRec.setEnabled(false);
-        btnStop.setEnabled(true);
-
+        isRecording = true;
         timer.setBase(SystemClock.elapsedRealtime());
         timer.start();
 
@@ -119,10 +112,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
             audioRecorder = null;
-            btnRec.setEnabled(true);
             btnPlay.setEnabled(true);
             timer.stop();
-
+            isRecording = true;
             Toast.makeText(getApplicationContext(),
                     "Recording stopped",
                     Toast.LENGTH_LONG).show();
