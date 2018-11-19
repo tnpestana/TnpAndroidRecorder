@@ -15,8 +15,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.transition.TransitionManager;
 import android.view.View;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.Toast;
@@ -49,13 +51,23 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        // create recording button animation
+        final Animation animation = new AlphaAnimation(1, 0.7f); // Change alpha from fully visible to invisible
+        animation.setDuration(250); // duration - half a second
+        animation.setInterpolator(new LinearInterpolator()); // do not alter animation rate
+        animation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
+        animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end so the button will fade back in
+
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!isRecording)
+                if(!isRecording) {
                     requestAudioPermissions();
-                else
+                    btnRec.startAnimation(animation);
+                } else {
                     stopRecording();
+                    btnRec.clearAnimation();
+                }
             }
         });
 
@@ -68,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static File createAudioFile(Context context, String audioName) throws IOException {
-        File storageDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+        File storageDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
         return File.createTempFile(audioName, ".3pg", storageDir);
     }
 
@@ -114,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
             audioRecorder = null;
             btnPlay.setEnabled(true);
             timer.stop();
-            isRecording = true;
+            isRecording = false;
             Toast.makeText(getApplicationContext(),
                     "Recording stopped",
                     Toast.LENGTH_LONG).show();
