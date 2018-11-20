@@ -64,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
         alphaAnimation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
         alphaAnimation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end
 
+        // onClick listeners.
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -95,6 +96,9 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     publicFile = createAudioFile(getApplicationContext(), "tnpRecording");
                     copyFile(outputFile, publicFile);
+                    Toast.makeText(getApplicationContext(),
+                            "File saved",
+                            Toast.LENGTH_LONG).show();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -152,10 +156,6 @@ public class MainActivity extends AppCompatActivity {
 
             btnPlay.setEnabled(true);
             btnSave.setEnabled(true);
-
-            Toast.makeText(getApplicationContext(),
-                    "Recording stopped",
-                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -183,9 +183,6 @@ public class MainActivity extends AppCompatActivity {
             btnSave.setEnabled(false);
             timer.setBase(SystemClock.elapsedRealtime());
             timer.start();
-            Toast.makeText(getApplicationContext(),
-                    "Playing recorded file",
-                    Toast.LENGTH_LONG).show();
         } else
         {
             mediaPlayer.stop();
