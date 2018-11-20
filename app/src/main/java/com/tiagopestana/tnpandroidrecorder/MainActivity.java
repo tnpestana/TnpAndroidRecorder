@@ -22,13 +22,17 @@ import android.widget.Chronometer;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button btnPlay, btnRec;
+    private Button btnPlay, btnRec, btnSave;
     private MediaRecorder audioRecorder;
     private MediaPlayer mediaPlayer;
     private File outputFile;
@@ -47,16 +51,18 @@ public class MainActivity extends AppCompatActivity {
 
         btnRec = findViewById(R.id.btnRec);
         btnPlay = findViewById(R.id.btnPlay);
+        btnSave = findViewById(R.id.btnSave);
         btnPlay.setEnabled(false);
+        btnSave.setEnabled(false);
 
         timer = findViewById(R.id.textView);
 
-        // create recording button animations
-        alphaAnimation = new AlphaAnimation(1, 0.6f); // Change alpha from fully visible to invisible
-        alphaAnimation.setDuration(250); // duration - half a second
-        alphaAnimation.setInterpolator(new LinearInterpolator()); // do not alter animation rate
+        // Record button animation
+        alphaAnimation = new AlphaAnimation(1, 0.6f);
+        alphaAnimation.setDuration(250);
+        alphaAnimation.setInterpolator(new LinearInterpolator());
         alphaAnimation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
-        alphaAnimation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end so the button will fade back in
+        alphaAnimation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end
 
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -81,12 +87,25 @@ public class MainActivity extends AppCompatActivity {
                 playRecording();
             }
         });
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                File publicFile;
+                try {
+                    publicFile = createAudioFile(getApplicationContext(), "tnpRecording");
+                    copyFile(outputFile, publicFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     private void startRecording() {
         audioRecorder = new MediaRecorder();
         try {
-            outputFile = createAudioFile(this, "tnpRecording");
+            outputFile = createInternalAudioFile(this, "tnpRecording");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -132,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
             isRecording = false;
 
             btnPlay.setEnabled(true);
+            btnSave.setEnabled(true);
 
             Toast.makeText(getApplicationContext(),
                     "Recording stopped",
@@ -155,10 +175,12 @@ public class MainActivity extends AppCompatActivity {
                 public void onCompletion(MediaPlayer mp) {
                     timer.stop();
                     btnPlay.setText(R.string.playButtonPlay);
+                    btnSave.setEnabled(true);
                 }
             });
             isPlaying = true;
             btnPlay.setText(R.string.playButtonStop);
+            btnSave.setEnabled(false);
             timer.setBase(SystemClock.elapsedRealtime());
             timer.start();
             Toast.makeText(getApplicationContext(),
@@ -169,14 +191,34 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.stop();
             timer.stop();
             btnPlay.setText(R.string.playButtonPlay);
+            btnSave.setEnabled(true);
             isPlaying = false;
         }
     }
 
-    // Audio file
+    // Create file in internal storage so it can be played by the app.
+    private static File createInternalAudioFile(Context context, String audioName) throws IOException {
+        return File.createTempFile(audioName, ".mp3", context.getFilesDir());
+    }
+
+    // Create public file in Music directory
     private static File createAudioFile(Context context, String audioName) throws IOException {
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+        // createTempFile is used to guarantee an unique file name.
         return File.createTempFile(audioName, ".mp3", storageDir);
+    }
+
+    public static void copyFile(File src, File dst) throws IOException {
+        try (InputStream in = new FileInputStream(src)) {
+            try (OutputStream out = new FileOutputStream(dst)) {
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            }
+        }
     }
 
     // Requesting run-time permissions.
