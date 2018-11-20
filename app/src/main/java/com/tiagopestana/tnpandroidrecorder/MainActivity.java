@@ -2,29 +2,37 @@ package com.tiagopestana.tnpandroidrecorder;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.transition.TransitionManager;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LinearInterpolator;
+import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,6 +41,10 @@ public class MainActivity extends AppCompatActivity {
     private File outputFile;
     private Chronometer timer;
     private boolean isRecording = false;
+    Animation alphaAnimation;
+
+    private String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission
+            .READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,25 +57,23 @@ public class MainActivity extends AppCompatActivity {
 
         timer = (Chronometer) findViewById(R.id.textView);
 
-        try {
-            outputFile = createAudioFile(this, "demo");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // create recording button animation
-        final Animation animation = new AlphaAnimation(1, 0.7f); // Change alpha from fully visible to invisible
-        animation.setDuration(250); // duration - half a second
-        animation.setInterpolator(new LinearInterpolator()); // do not alter animation rate
-        animation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
-        animation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end so the button will fade back in
+        // create recording button animations
+        alphaAnimation = new AlphaAnimation(1, 0.7f); // Change alpha from fully visible to invisible
+        alphaAnimation.setDuration(250); // duration - half a second
+        alphaAnimation.setInterpolator(new LinearInterpolator()); // do not alter animation rate
+        alphaAnimation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
+        alphaAnimation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end so the button will fade back in
 
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!isRecording) {
-                    requestAudioPermissions();
-                    btnRec.startAnimation(animation);
+                if (!isRecording) {
+                    if (arePermissionsEnabled()) {
+                        startRecording();
+                        btnRec.startAnimation(alphaAnimation);
+                    } else {
+                        requestMultiplePermissions();
+                    }
                 } else {
                     stopRecording();
                     btnRec.clearAnimation();
@@ -80,14 +90,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private static File createAudioFile(Context context, String audioName) throws IOException {
-        File storageDir = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS);
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
         return File.createTempFile(audioName, ".3pg", storageDir);
     }
 
-    private void startRecording()
-    {
-        audioRecorder = new MediaRecorder();
+    private void startRecording() {
+        try {
+            outputFile = createAudioFile(this, "demo");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+        audioRecorder = new MediaRecorder();
         audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
@@ -97,18 +111,18 @@ public class MainActivity extends AppCompatActivity {
             audioRecorder.prepare();
             audioRecorder.start();
         } catch (IllegalStateException ise) {
-            // handle
+            Log.w("startRecording", "audiorecorder.start IllegalStateExecution");
         } catch (IOException ioe) {
-            // handle
+            Log.w("startRecording", "audiorecorder.start IOException");
         }
 
         isRecording = true;
-        timer.setBase(SystemClock.elapsedRealtime());
-        timer.start();
-
         Toast.makeText(getApplicationContext(),
                 "Recording started",
                 Toast.LENGTH_LONG).show();
+
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
     }
 
     private void stopRecording() {
@@ -118,9 +132,8 @@ public class MainActivity extends AppCompatActivity {
                 audioRecorder.reset();
                 audioRecorder.release();
             } catch (IllegalStateException ise) {
-                Toast.makeText(getApplicationContext(),
-                        "audio recorder.stop() -> IllegalStateException",
-                        Toast.LENGTH_LONG).show();
+                Log.w("stopRecording", "audiorecorder.stop IllegalStateException");
+
             }
 
             audioRecorder = null;
@@ -143,69 +156,66 @@ public class MainActivity extends AppCompatActivity {
                     "Playing recorded file",
                     Toast.LENGTH_LONG).show();
         } catch (IOException ioe) {
-            // lidar
+            Log.w("playRecording", "mediaplayer.start IllegalStateException");
         }
     }
 
-    //Requesting run-time permissions
+    // Requesting run-time permissions
 
-    //Create placeholder for user's consent to record_audio permission.
-    //This will be used in handling callback
-    private final int MY_PERMISSIONS_RECORD_AUDIO = 1;
+    // check if all necessary permissions are granted
+    private boolean arePermissionsEnabled() {
+        for (String permission : permissions) {
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
+                return false;
+        }
+        return true;
+    }
 
-    private void requestAudioPermissions() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            //When permission is not granted by user, show them message why this permission is needed.
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.RECORD_AUDIO)) {
-                Toast.makeText(this,
-                        "Please grant permissions to record audio",
-                        Toast.LENGTH_LONG).show();
-
-                //Give user option to still opt-in the permissions
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
-
-            } else {
-                // Show user dialog to grant permission to record audio
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO},
-                        MY_PERMISSIONS_RECORD_AUDIO);
+    // request all the permissions stored in the "permissions" array and store all the declined
+    // permissions in a new "remainingPermissions" array.
+    private void requestMultiplePermissions() {
+        List<String> remainingPermissions = new ArrayList<>();
+        for (String permission : permissions) {
+            if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                remainingPermissions.add(permission);
             }
         }
-        //If permission is granted, then go ahead recording audio
-        else if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-
-            //Go ahead with recording audio now
-            startRecording();
-        }
+        requestPermissions(remainingPermissions.toArray(new String[remainingPermissions.size()]), 101);
     }
 
-    //Handling callback
+    // Handling callback
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_RECORD_AUDIO: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay!
-                    startRecording();
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                    Toast.makeText(this,
-                            "Permissions Denied to record audio",
-                            Toast.LENGTH_LONG).show();
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 101) {
+            for (int i = 0; i < grantResults.length; i++) {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    if (shouldShowRequestPermissionRationale(permissions[i])) {
+                        new AlertDialog.Builder(this)
+                                .setMessage("I'm sorry but both permissions are needed for the " +
+                                        "recording to work correctly, please consider accepting those.")
+                                .setPositiveButton("Allow", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        MainActivity.this.requestMultiplePermissions();
+                                    }
+                                })
+                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                })
+                                .create()
+                                .show();
+                    }
+                    return;
                 }
-                return;
             }
+            // If all permissions are granted we force the recording to start by performing a second
+            // click. It would possibly be better if we called startRecording() to avoid additional
+            // permission checking.
+            btnRec.performClick();
         }
     }
 }
