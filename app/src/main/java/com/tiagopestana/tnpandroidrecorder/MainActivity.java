@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
         audioRecorder.setOutputFile(outputFile.getAbsolutePath());
 
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
     // Audio file
     private static File createAudioFile(Context context, String audioName) throws IOException {
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
-        return File.createTempFile(audioName, ".3pg", storageDir);
+        return File.createTempFile(audioName, ".mp3", storageDir);
     }
 
     // Requesting run-time permissions.
