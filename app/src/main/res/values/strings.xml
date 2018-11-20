@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">TnpAndroidRecorder</string>
+    <string name="app_name">Tnp Audio Recorder</string>
+    <string name="playButtonPlay">Play</string>
+    <string name="playButtonStop">Stop</string>
 </resources>

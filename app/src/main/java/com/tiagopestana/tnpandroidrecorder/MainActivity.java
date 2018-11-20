@@ -140,28 +140,37 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void playRecording() {
-        mediaPlayer = new MediaPlayer();
-        try {
-            mediaPlayer.setDataSource(outputFile.getAbsolutePath());
-            mediaPlayer.prepare();
-            mediaPlayer.start();
-            isPlaying = true;
-        } catch (IOException ioe) {
-            Log.w("playRecording", "mediaplayer.start IllegalStateException");
-        }
+        if(!isPlaying) {
+            mediaPlayer = new MediaPlayer();
+            try {
+                mediaPlayer.setDataSource(outputFile.getAbsolutePath());
+                mediaPlayer.prepare();
+                mediaPlayer.start();
 
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                timer.stop();
+            } catch (IOException ioe) {
+                Log.w("playRecording", "mediaplayer.start IllegalStateException");
             }
-        });
-
-        timer.setBase(SystemClock.elapsedRealtime());
-        timer.start();
-        Toast.makeText(getApplicationContext(),
-                "Playing recorded file",
-                Toast.LENGTH_LONG).show();
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    timer.stop();
+                    btnPlay.setText(R.string.playButtonPlay);
+                }
+            });
+            isPlaying = true;
+            btnPlay.setText(R.string.playButtonStop);
+            timer.setBase(SystemClock.elapsedRealtime());
+            timer.start();
+            Toast.makeText(getApplicationContext(),
+                    "Playing recorded file",
+                    Toast.LENGTH_LONG).show();
+        } else
+        {
+            mediaPlayer.stop();
+            timer.stop();
+            btnPlay.setText(R.string.playButtonPlay);
+            isPlaying = false;
+        }
     }
 
     // Audio file
