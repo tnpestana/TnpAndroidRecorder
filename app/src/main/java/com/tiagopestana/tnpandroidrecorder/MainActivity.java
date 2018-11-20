@@ -30,9 +30,11 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btnPlay, btnRec;
     private MediaRecorder audioRecorder;
+    private MediaPlayer mediaPlayer;
     private File outputFile;
     private Chronometer timer;
     private boolean isRecording = false;
+    private boolean isPlaying = false;
     Animation alphaAnimation;
 
     private String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission
@@ -82,13 +84,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startRecording() {
+        audioRecorder = new MediaRecorder();
         try {
             outputFile = createAudioFile(this, "tnpRecording");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        audioRecorder = new MediaRecorder();
         audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
@@ -107,6 +108,8 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(getApplicationContext(),
                 "Recording started",
                 Toast.LENGTH_LONG).show();
+
+        btnPlay.setEnabled(false);
 
         timer.setBase(SystemClock.elapsedRealtime());
         timer.start();
@@ -127,6 +130,9 @@ public class MainActivity extends AppCompatActivity {
             btnPlay.setEnabled(true);
             timer.stop();
             isRecording = false;
+
+            btnPlay.setEnabled(true);
+
             Toast.makeText(getApplicationContext(),
                     "Recording stopped",
                     Toast.LENGTH_LONG).show();
@@ -134,17 +140,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void playRecording() {
-        MediaPlayer mediaPlayer = new MediaPlayer();
+        mediaPlayer = new MediaPlayer();
         try {
             mediaPlayer.setDataSource(outputFile.getAbsolutePath());
             mediaPlayer.prepare();
             mediaPlayer.start();
-            Toast.makeText(getApplicationContext(),
-                    "Playing recorded file",
-                    Toast.LENGTH_LONG).show();
+            isPlaying = true;
         } catch (IOException ioe) {
             Log.w("playRecording", "mediaplayer.start IllegalStateException");
         }
+
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                timer.stop();
+            }
+        });
+
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
+        Toast.makeText(getApplicationContext(),
+                "Playing recorded file",
+                Toast.LENGTH_LONG).show();
     }
 
     // Audio file
