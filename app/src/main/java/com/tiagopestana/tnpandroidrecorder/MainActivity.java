@@ -27,8 +27,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -114,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.w("startRecording", "previous file deleted");
         super.onDestroy();
     }
+
 
     private void startRecording() {
         audioRecorder = new MediaRecorder();
@@ -215,17 +219,19 @@ public class MainActivity extends AppCompatActivity {
         return File.createTempFile(audioName, ".mp3", context.getFilesDir());
     }
 
-    // Create public file in Music directory
+    // Create public file in Music directory.
     private static File createAudioFile(Context context, String audioName) throws IOException {
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
+        String timeStamp = new SimpleDateFormat("_yyyy-MM-dd_HH'h'mm'm'ss's'", Locale.US).format(new Date());
+        return new File(storageDir, audioName + timeStamp + ".mp3");
         // createTempFile is used to guarantee an unique file name.
-        return File.createTempFile(audioName, ".mp3", storageDir);
+        //return File.createTempFile(audioName, ".mp3", storageDir);
     }
 
     public static void copyFile(File src, File dst) throws IOException {
         try (InputStream in = new FileInputStream(src)) {
             try (OutputStream out = new FileOutputStream(dst)) {
-                // Transfer bytes from in to out
+                // Transfer bytes from in to out.
                 byte[] buf = new byte[1024];
                 int len;
                 while ((len = in.read(buf)) > 0) {
@@ -235,8 +241,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Requesting run-time permissions.
-    // Check if all necessary permissions are granted.
+    // Run-time request for permissions.
     private boolean arePermissionsEnabled() {
         for (String permission : permissions) {
             if (checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED)
