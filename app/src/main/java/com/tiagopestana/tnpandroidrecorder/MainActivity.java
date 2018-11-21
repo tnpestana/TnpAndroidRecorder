@@ -42,7 +42,9 @@ public class MainActivity extends AppCompatActivity {
     private Chronometer timer;
     private boolean isRecording = false;
     private boolean isPlaying = false;
-    Animation alphaAnimation;
+    Animation recordingAnimation;
+
+    private static String audioFileName = "tnpRecording";
 
     private String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission
             .READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO};
@@ -59,22 +61,21 @@ public class MainActivity extends AppCompatActivity {
         btnSave.setEnabled(false);
 
         timer = findViewById(R.id.textView);
+        
+        recordingAnimation = new AlphaAnimation(1, 0.6f);
+        recordingAnimation.setDuration(250);
+        recordingAnimation.setInterpolator(new LinearInterpolator());
+        recordingAnimation.setRepeatCount(Animation.INFINITE);
+        recordingAnimation.setRepeatMode(Animation.REVERSE);
 
-        // Record button animation
-        alphaAnimation = new AlphaAnimation(1, 0.6f);
-        alphaAnimation.setDuration(250);
-        alphaAnimation.setInterpolator(new LinearInterpolator());
-        alphaAnimation.setRepeatCount(Animation.INFINITE); // Repeat animation infinitely
-        alphaAnimation.setRepeatMode(Animation.REVERSE); // Reverse animation at the end
-
-        // onClick listeners.
+        // ##############    onClick Listeners    ##############
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!isRecording) {
                     if (arePermissionsEnabled()) {
                         startRecording();
-                        btnRec.startAnimation(alphaAnimation);
+                        btnRec.startAnimation(recordingAnimation);
                     } else {
                         requestMultiplePermissions();
                     }
@@ -84,20 +85,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 playRecording();
             }
         });
-
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 File publicFile;
                 try {
-                    publicFile = createAudioFile(getApplicationContext(), "tnpRecording");
+                    publicFile = createAudioFile();
                     copyFile(outputFile, publicFile);
                     Toast.makeText(getApplicationContext(),
                             "File saved",
@@ -118,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-
+    // ##############    Recorder Management    ##############
     private void startRecording() {
         audioRecorder = new MediaRecorder();
 
@@ -129,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         try {
-            outputFile = createInternalAudioFile(this, "tnpRecording");
+            outputFile = createInternalAudioFile(this);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -214,18 +213,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // ##############    File Management    ##############
     // Create file in internal storage so it can be played by the app.
-    private static File createInternalAudioFile(Context context, String audioName) throws IOException {
-        return File.createTempFile(audioName, ".mp3", context.getFilesDir());
+    private static File createInternalAudioFile(Context context) throws IOException {
+        return File.createTempFile(audioFileName, ".mp3", context.getFilesDir());
     }
-
     // Create public file in Music directory.
-    private static File createAudioFile(Context context, String audioName) throws IOException {
+    private static File createAudioFile() {
         File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC);
         String timeStamp = new SimpleDateFormat("_yyyy-MM-dd_HH'h'mm'm'ss's'", Locale.US).format(new Date());
-        return new File(storageDir, audioName + timeStamp + ".mp3");
-        // createTempFile is used to guarantee an unique file name.
-        //return File.createTempFile(audioName, ".mp3", storageDir);
+        return new File(storageDir, audioFileName + timeStamp + ".mp3");
     }
 
     public static void copyFile(File src, File dst) throws IOException {
@@ -241,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // ##############    Permission Management    ##############
     // Run-time request for permissions.
     private boolean arePermissionsEnabled() {
         for (String permission : permissions) {
@@ -249,7 +247,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
     // Request all the permissions stored in the "permissions" array and store all the declined
     // permissions in a new "remainingPermissions" array.
     private void requestMultiplePermissions() {
@@ -259,9 +256,8 @@ public class MainActivity extends AppCompatActivity {
                 remainingPermissions.add(permission);
             }
         }
-        requestPermissions(remainingPermissions.toArray(new String[remainingPermissions.size()]), 101);
+        requestPermissions(remainingPermissions.toArray(new String[0]), 101);
     }
-
     // Handling callback.
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
