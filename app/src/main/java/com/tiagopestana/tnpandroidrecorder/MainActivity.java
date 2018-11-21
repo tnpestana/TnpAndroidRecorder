@@ -106,13 +106,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        if (outputFile!=null)
+            if (outputFile.exists())
+                if (outputFile.delete())
+                    Log.w("startRecording", "previous file deleted");
+        super.onDestroy();
+    }
+
     private void startRecording() {
         audioRecorder = new MediaRecorder();
+
+        if (outputFile!=null)
+            if (outputFile.exists())
+                if (outputFile.delete())
+                    Log.w("startRecording", "previous file deleted");
+
+
         try {
             outputFile = createInternalAudioFile(this, "tnpRecording");
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
