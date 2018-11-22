@@ -6,6 +6,8 @@
 
     <color name="background">#646A7B</color>
     <color name="primary">#2F3445</color>
+    <color name="primaryDisabled">#30475269</color>
     <color name="primaryDark">#1B1E2A</color>
     <color name="white">#FFFFFF</color>
+    <color name="whiteDisabled">#30FFFFFF</color>
 </resources>

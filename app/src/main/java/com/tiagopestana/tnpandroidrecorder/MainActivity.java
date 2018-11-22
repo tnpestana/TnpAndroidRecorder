@@ -49,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission
             .READ_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO};
 
+    // ##############    Lifecycle    ##############
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -153,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.LENGTH_LONG).show();
 
         btnPlay.setEnabled(false);
-
+        btnSave.setEnabled(false);
         timer.setBase(SystemClock.elapsedRealtime());
         timer.start();
     }

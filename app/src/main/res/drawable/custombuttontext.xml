@@ -6,5 +6,5 @@
 
     <item
         android:state_enabled="false"
-        android:color="#30FFFFFF"/>
+        android:color="@color/whiteDisabled"/>
 </selector>

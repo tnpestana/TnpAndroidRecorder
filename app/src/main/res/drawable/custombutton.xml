@@ -10,7 +10,7 @@
     <item android:state_enabled="false" >
         <shape>
             <solid
-                android:color="#30475269"
+                android:color="@color/primaryDisabled"
                 />
         </shape>
     </item>
