@@ -46,6 +46,7 @@ public class RecorderFragment extends Fragment {
     private MediaPlayer mediaPlayer;
     private File outputFile;
     private Chronometer timer;
+    long pauseOffset;
     private boolean isRecording = false;
     private boolean isPlaying = false;
     Animation recordingAnimation;
@@ -106,7 +107,7 @@ public class RecorderFragment extends Fragment {
                 btnSave.setEnabled(false);
                 btnPlay.setEnabled(false);
             } else {
-                timer.setBase(SystemClock.elapsedRealtime() - savedInstanceState.getLong("time"));
+                timer.setBase(SystemClock.elapsedRealtime() - pauseOffset);
             }
         }
 
@@ -219,6 +220,7 @@ public class RecorderFragment extends Fragment {
             audioRecorder = null;
             btnPlay.setEnabled(true);
             timer.stop();
+            pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
             isRecording = false;
 
             btnPlay.setEnabled(true);
@@ -241,6 +243,7 @@ public class RecorderFragment extends Fragment {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
                     timer.stop();
+                    pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
                     btnPlay.setText(R.string.playButtonPlay);
                     btnSave.setEnabled(true);
                     isPlaying = false;
@@ -255,6 +258,7 @@ public class RecorderFragment extends Fragment {
         {
             mediaPlayer.stop();
             timer.stop();
+            pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
             btnPlay.setText(R.string.playButtonPlay);
             btnSave.setEnabled(true);
             isPlaying = false;
