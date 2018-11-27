@@ -3,4 +3,7 @@
     <string name="playButtonPlay">Play</string>
     <string name="playButtonStop">Stop</string>
     <string name="saveButton">Save</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
