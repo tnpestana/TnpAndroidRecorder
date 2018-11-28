@@ -1,6 +1,6 @@
 # Android Audio Recorder
 
-While navigating google play for a simple audio recording app I found out most of the free ones to be riddled with ads so I thought I'd give it a try and learn about Android development in the process.
+While navigating the Google Play Store for a simple audio recording app I found out most of the free ones to be riddled with ads so I thought I'd give it a try and learn about Android development in the process.
 
 ## Building
 
