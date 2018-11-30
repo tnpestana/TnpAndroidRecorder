@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
+import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.Toast;
@@ -81,7 +82,8 @@ public class RecorderFragment extends Fragment {
         btnPlay = getView().findViewById(R.id.btnPlay);
         btnSave = getView().findViewById(R.id.btnSave);
         timer = getView().findViewById(R.id.textView);
-        recordingAnimation = new AlphaAnimation(1, 0.6f);
+        recordingAnimation = new ScaleAnimation(1f, 0.9f, 1f, 0.9f,
+                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
         recordingAnimation.setDuration(250);
         recordingAnimation.setInterpolator(new LinearInterpolator());
         recordingAnimation.setRepeatCount(Animation.INFINITE);
