@@ -50,6 +50,7 @@ public class RecorderFragment extends Fragment {
     long pauseOffset;
     private boolean isRecording = false;
     private boolean isPlaying = false;
+    private boolean isSaved = false;
     Animation recordingAnimation;
     private static String audioFileName = "tnpRecording";
     private String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission
@@ -109,6 +110,7 @@ public class RecorderFragment extends Fragment {
                 btnSave.setEnabled(false);
                 btnPlay.setEnabled(false);
             } else {
+                if(isSaved) btnSave.setEnabled(false);
                 timer.setBase(SystemClock.elapsedRealtime() - pauseOffset);
             }
         }
@@ -119,22 +121,26 @@ public class RecorderFragment extends Fragment {
                 if (!isRecording) {
                     if (arePermissionsEnabled()) {
                         startRecording();
+                        btnSave.setEnabled(false);
                         btnRec.startAnimation(recordingAnimation);
                     } else {
                         requestMultiplePermissions();
                     }
                 } else {
                     stopRecording();
+                    btnSave.setEnabled(true);
                     btnRec.clearAnimation();
                 }
             }
         });
+
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 playRecording();
             }
         });
+
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,6 +148,8 @@ public class RecorderFragment extends Fragment {
                 try {
                     publicFile = createAudioFile();
                     copyFile(outputFile, publicFile);
+                    btnSave.setEnabled(false);
+                    isSaved = true;
                     Toast.makeText(getContext(),
                             "File saved",
                             Toast.LENGTH_LONG).show();
@@ -198,6 +206,7 @@ public class RecorderFragment extends Fragment {
         }
 
         isRecording = true;
+        isSaved = false;
         Toast.makeText(getContext(),
                 "Recording started",
                 Toast.LENGTH_LONG).show();
@@ -247,7 +256,11 @@ public class RecorderFragment extends Fragment {
                     timer.stop();
                     pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
                     btnPlay.setText(R.string.playButtonPlay);
-                    btnSave.setEnabled(true);
+                    if(isSaved) {
+                        btnSave.setEnabled(false);
+                    } else {
+                        btnSave.setEnabled(true);
+                    }
                     isPlaying = false;
                 }
             });;
