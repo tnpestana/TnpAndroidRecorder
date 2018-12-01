@@ -3,7 +3,8 @@
     <item android:state_enabled="true" >
         <shape>
             <solid
-                android:color="@color/primary" />
+                android:color="@color/primary"
+                android:elevation="6dp"/>
             <corners
                 android:radius="5dp">
             </corners>
@@ -14,6 +15,7 @@
         <shape>
             <solid
                 android:color="@color/primaryDisabled"
+                android:elevation="0dp"
                 />
             <corners
                 android:radius="5dp">

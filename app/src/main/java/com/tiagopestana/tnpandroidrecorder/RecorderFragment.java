@@ -39,7 +39,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-
 public class RecorderFragment extends Fragment {
 
     private Button btnPlay, btnRec, btnSave;
@@ -83,8 +82,10 @@ public class RecorderFragment extends Fragment {
         btnPlay = getView().findViewById(R.id.btnPlay);
         btnSave = getView().findViewById(R.id.btnSave);
         timer = getView().findViewById(R.id.textView);
+
         recordingAnimation = new ScaleAnimation(1f, 0.9f, 1f, 0.9f,
-                Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f);
         recordingAnimation.setDuration(250);
         recordingAnimation.setInterpolator(new LinearInterpolator());
         recordingAnimation.setRepeatCount(Animation.INFINITE);
@@ -137,7 +138,11 @@ public class RecorderFragment extends Fragment {
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                playRecording();
+                if(!isPlaying) {
+                    startPlaying();
+                } else {
+                    stopPlaying();
+                }
             }
         });
 
@@ -166,37 +171,30 @@ public class RecorderFragment extends Fragment {
         if (outputFile!=null)
             if (outputFile.exists())
                 if (outputFile.delete())
-                    Log.w("startRecording", "previous file deleted");
+                    Log.i("onDestroy", "previous file deleted");
     }
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        // Save current chronometer value
         outState.putLong("time", SystemClock.elapsedRealtime() - timer.getBase());
     }
 
-    // ##############    Recorder Management    ##############
     private void startRecording() {
         audioRecorder = new MediaRecorder();
 
         if (outputFile!=null)
             if (outputFile.exists())
                 if (outputFile.delete())
-                    Log.w("startRecording", "previous file deleted");
-
+                    Log.i("startRecording", "previous file deleted");
 
         try {
             outputFile = createInternalAudioFile(getContext());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
-        audioRecorder.setOutputFile(outputFile.getAbsolutePath());
-
-        try {
+            audioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            audioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            audioRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
+            audioRecorder.setOutputFile(outputFile.getAbsolutePath());
             audioRecorder.prepare();
             audioRecorder.start();
         } catch (IllegalStateException ise) {
@@ -207,14 +205,14 @@ public class RecorderFragment extends Fragment {
 
         isRecording = true;
         isSaved = false;
-        Toast.makeText(getContext(),
-                "Recording started",
-                Toast.LENGTH_LONG).show();
-
         btnPlay.setEnabled(false);
         btnSave.setEnabled(false);
         timer.setBase(SystemClock.elapsedRealtime());
         timer.start();
+
+        Toast.makeText(getContext(),
+                "Recording started",
+                Toast.LENGTH_LONG).show();
     }
 
     private void stopRecording() {
@@ -227,9 +225,7 @@ public class RecorderFragment extends Fragment {
                 Log.w("stopRecording", "audiorecorder.stop IllegalStateException");
 
             }
-
             audioRecorder = null;
-            btnPlay.setEnabled(true);
             timer.stop();
             pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
             isRecording = false;
@@ -239,48 +235,51 @@ public class RecorderFragment extends Fragment {
         }
     }
 
-    private void playRecording() {
-        if(!isPlaying) {
-            mediaPlayer = new MediaPlayer();
-            try {
-                mediaPlayer.setDataSource(outputFile.getAbsolutePath());
-                mediaPlayer.prepare();
-                mediaPlayer.start();
+    private void startPlaying() {
+        mediaPlayer = new MediaPlayer();
+        try {
+            mediaPlayer.setDataSource(outputFile.getAbsolutePath());
+            mediaPlayer.prepare();
+            mediaPlayer.start();
 
-            } catch (IOException ioe) {
-                Log.w("playRecording", "mediaplayer.start IllegalStateException");
-            }
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    timer.stop();
-                    pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
-                    btnPlay.setText(R.string.playButtonPlay);
-                    if(isSaved) {
-                        btnSave.setEnabled(false);
-                    } else {
-                        btnSave.setEnabled(true);
-                    }
-                    isPlaying = false;
+        } catch (IOException ioe) {
+            Log.w("playRecording", "mediaplayer.start IllegalStateException");
+        }
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                timer.stop();
+                pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
+                btnPlay.setText(R.string.playButtonPlay);
+                if(isSaved) {
+                    btnSave.setEnabled(false);
+                } else {
+                    btnSave.setEnabled(true);
                 }
-            });;
-            isPlaying = true;
-            btnPlay.setText(R.string.playButtonStop);
+                isPlaying = false;
+            }
+        });
+        isPlaying = true;
+        btnPlay.setText(R.string.playButtonStop);
+        btnSave.setEnabled(false);
+        timer.setBase(SystemClock.elapsedRealtime());
+        timer.start();
+    }
+
+    private void stopPlaying(){
+        mediaPlayer.stop();
+        timer.stop();
+        pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
+        btnPlay.setText(R.string.playButtonPlay);
+        btnSave.setEnabled(true);
+        isPlaying = false;
+        if(isSaved) {
             btnSave.setEnabled(false);
-            timer.setBase(SystemClock.elapsedRealtime());
-            timer.start();
-        } else
-        {
-            mediaPlayer.stop();
-            timer.stop();
-            pauseOffset = SystemClock.elapsedRealtime() - timer.getBase();
-            btnPlay.setText(R.string.playButtonPlay);
+        } else {
             btnSave.setEnabled(true);
-            isPlaying = false;
         }
     }
 
-    // ##############    File Management    ##############
     // Create file in internal storage so it can be played by the app.
     private static File createInternalAudioFile(Context context) throws IOException {
         return File.createTempFile(audioFileName, ".mp3", context.getFilesDir());
@@ -305,7 +304,6 @@ public class RecorderFragment extends Fragment {
         }
     }
 
-    // ##############    Permission Management    ##############
     // Run-time request for permissions.
     private boolean arePermissionsEnabled() {
         for (String permission : permissions) {
